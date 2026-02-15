@@ -20,8 +20,13 @@ final class ViewController: UIViewController {
     // MARK: - Properties
     
     private var counter: Int = 0 {
-        didSet { updateLabel() }
+        didSet {
+            updateLabel()
+            UserDefaults.standard.set(counter, forKey: "counterValue")
+        }
     }
+    
+    private var historyArray: [String] = []
     
     private lazy var dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -34,6 +39,8 @@ final class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         updateLabel()
+        getHistory()
+        
     }
 
     // MARK: - Private Methods
@@ -47,13 +54,42 @@ final class ViewController: UIViewController {
         let dateString = dateFormatter.string(from: Date())
         
         // Добавляем запись в историю.
-        textHistory.text += "\n[\(dateString)]: \(text)"
+        let textValue: String = "\n[\(dateString)]: \(text)"
         
+        textHistory.text += textValue
+        historyArray.append(textValue)
+
+        scrollHistory()
+        
+
+        UserDefaults.standard.set(historyArray, forKey: "counterHistory")
+        
+    }
+    
+    private func getHistory() {
+        self.counter = UserDefaults.standard.integer(forKey: "counterValue")
+        
+        
+        
+        if let loadedHistory = UserDefaults.standard.array(forKey: "counterHistory") as? [String] {
+            //print("loadedHistory содержит \(loadedHistory.count) записей в истории")
+            
+            // синхронизируем массив и историю текста
+            for value in loadedHistory {
+                historyArray.append(value)
+                textHistory.text += value
+            }
+            scrollHistory()
+        }
+    }
+    
+    // Автоматически прокручиваем текст к последней строке
+    private func scrollHistory() {
         // Автоматически прокручиваем текст к последней строке.
         let range = NSMakeRange(textHistory.text.count, 0)
         textHistory.scrollRangeToVisible(range)
     }
-
+    
     // MARK: - Actions
     
     @IBAction private func minusButton(_ sender: Any) {
